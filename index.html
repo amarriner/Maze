@@ -8,8 +8,8 @@
         <script src="js/phaser.min.js"></script>
         
         <script type="text/javascript">
-            var MAX_X = 30;
-            var MAX_Y = 30;
+            var MAX_X = 25;
+            var MAX_Y = 15;
             
             var player;
             var cursors;
@@ -63,7 +63,7 @@
                      
                             if (! (x == square.x && y == square.y) &&
                                   (x == square.x || y == square.y) && 
-                                  (! mazeGrid[x][y])) {
+                                  (mazeGrid[x][y] == 0)) {
                                 sides.push(new Square(x, y));
                             }
                         }
@@ -95,20 +95,16 @@
                         
                         squareStack.push(square);
                         mazeGrid[newSquare.x][newSquare.y] = newSquare;
+                        if (cnt < 50) 
+                            console.log('Moving to sqare ' + newSquare.x + ',' + newSquare.y);
                         square = newSquare;
-                        //var oldSquare = square;
-                        //square = newSquare;
-                        // if (cnt < 50) 
-                        //    console.log('Adding square ' + square.x + ',' + square.y + ' to maze');
-                        //mazeGrid[square.x][square.y] = square;
-                        //squareStack.push(oldSquare);
                         mazeCount++;
                     }
                     else {
                         square = squareStack.pop();
                         square = mazeGrid[square.x][square.y];
-                        // if (cnt < 50)
-                        //     console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
+                        if (cnt < 50)
+                            console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
                     }
 
                     cnt++;
@@ -159,15 +155,21 @@
                 maze.load.image('west', 'assets/west.png');
                 
                 maze.load.image('player', 'assets/player.png');
+                maze.load.image('end', 'assets/end.png');
             }
             
             function create() {
                 maze.stage.backgroundColor = '#ffffff';
                 
-                var startX = Math.floor(Math.random() * (MAX_X - 10)) + 10;
-                var startY = Math.floor(Math.random() * (MAX_Y - 10)) + 10;
+                var startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
+                var startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
+                console.log('Starting at square ' + startX + ',' + startY);
                 generateMaze(startX, startY);
+                maze.add.sprite(startX * 30, startY * 30, 'end');
             
+                startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
+                startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
+                console.log('Moving player to ' + startX + ',' + startY);
                 player = new Player(startX, startY, maze.add.sprite(startX * 30, startY * 30, 'player'));
                 
                 cursors = maze.input.keyboard.createCursorKeys();
@@ -178,7 +180,7 @@
                     if (! mazeGrid[player.x][player.y].north) {
                         player.y -= 1;
                         player.sprite.y -= 30;
-                        console.log('Up');
+                        // console.log('Up');
                     }
                 }
 
@@ -186,7 +188,7 @@
                     if (! mazeGrid[player.x][player.y].south) {
                         player.y += 1;
                         player.sprite.y += 30;
-                        console.log('Down');
+                        // console.log('Down');
                     }
                 }
                 
@@ -194,7 +196,7 @@
                     if (! mazeGrid[player.x][player.y].west) {
                         player.x -= 1;
                         player.sprite.x -= 30;
-                        console.log('Left');
+                        // console.log('Left');
                     }
                 }
                     
@@ -202,7 +204,7 @@
                     if (! mazeGrid[player.x][player.y].east) {
                         player.x += 1;
                         player.sprite.x += 30;
-                        console.log('Right');
+                        // console.log('Right');
                     }
                 }
             }
