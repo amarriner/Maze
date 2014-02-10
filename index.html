@@ -13,6 +13,7 @@
             
             var player;
             var cursors;
+            var keyPressed = 0;
             
             var squareStack = [];
             var mazeGrid    = [[]];
@@ -176,37 +177,46 @@
             }
             
             function update() {
-                if (cursors.up.isDown) {
+                
+                if (cursors.up.isDown && cursors.up.timeDown != keyPressed) {
                     if (! mazeGrid[player.x][player.y].north) {
+                        keyPressed = cursors.up.timeDown;
                         player.y -= 1;
                         player.sprite.y -= 30;
-                        // console.log('Up');
+                        console.log(cursors.up.timeDown + ' --- ' + keyPressed);
                     }
                 }
 
-                if (cursors.down.isDown) {
+                if (cursors.down.isDown && cursors.down.timeDown != keyPressed) {
                     if (! mazeGrid[player.x][player.y].south) {
+                        keyPressed = cursors.down.timeDown;
                         player.y += 1;
                         player.sprite.y += 30;
                         // console.log('Down');
                     }
                 }
                 
-                if (cursors.left.isDown) {
+                if (cursors.left.isDown && cursors.left.timeDown != keyPressed) {
                     if (! mazeGrid[player.x][player.y].west) {
+                        keyPressed = cursors.left.timeDown;
                         player.x -= 1;
                         player.sprite.x -= 30;
                         // console.log('Left');
                     }
                 }
                     
-                if (cursors.right.isDown) {
+                if (cursors.right.isDown && cursors.right.timeDown != keyPressed) {
                     if (! mazeGrid[player.x][player.y].east) {
+                        keyPressed = cursors.right.timeDown;
                         player.x += 1;
                         player.sprite.x += 30;
                         // console.log('Right');
                     }
                 }
+                
+                if ((cursors.up.isUp || cursors.down.isUp || cursors.left.isUp || cursors.right.ipUp) &&
+                     keyPressed)
+                     keyPressed = false;
             }
                         
             
