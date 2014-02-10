@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Maze</title>
+        <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+        
+        <script src="js/jquery-1.11.0.min.js"></script>
+        <script src="js/phaser.min.js"></script>
+        
+        <script type="text/javascript">
+            var MAX_X = 15;
+            var MAX_Y = 15;
+            
+            var squareStack = [];
+            var mazeGrid    = [[]];
+            
+            function Square(x, y) {
+                this.north = 1;
+                this.south = 1;
+                this.east  = 1;
+                this.west  = 1;
+                
+                this.x     = x;
+                this.y     = y;
+            }
+            
+            function generateMaze() {
+                var i, j;
+                var x, y;
+                var sides = [];
+                var square = new Square(7, 7);
+                squareStack.push(square);
+                
+                for (i = 0; i < MAX_X; i++) {
+                    mazeGrid[i] = [];
+                    for(j = 0; j < MAX_Y; j++) {
+                        mazeGrid[i][j] = 0;
+                    }
+                }
+                
+                mazeGrid[square.x][square.y] = square;
+                
+                var cnt = 0;
+                var mazeCount = 0;
+                while(squareStack.length > 0 && cnt < 1000) {
+                    sides = [];
+                    
+                    for(i = square.x - 1; i <= square.x + 1; i++) {
+                        for (j = square.y - 1; j <= square.y + 1; j++) {
+                            x = (i < 0) ? 0 : i;
+                            x = (x >= MAX_X) ? MAX_X - 1 : x;
+                            y = (y < 0) ? 0 : j;
+                            y = (y >= MAX_Y) ? MAX_Y - 1 : y;
+                     
+                            if (! (x == square.x && y == square.y) &&
+                                  (x == square.x || y == square.y) && 
+                                  (! mazeGrid[x][y])) {
+                                sides.push(new Square(x, y));
+                            }
+                        }
+                    }
+                    
+                    if (sides.length > 0) {
+                        
+                        var newSquare = sides[Math.floor(Math.random() * sides.length)];
+                        
+                        if (newSquare.y < square.y) {
+                            square.north = 0;
+                            newSquare.south = 0;
+                        }
+                        
+                        if (newSquare.y > square.y) {
+                            square.south = 0;
+                            newSquare.north = 0;
+                        }
+                        
+                        if (newSquare.x < square.x) {
+                            square.west = 0;
+                            newSquare.east = 0;
+                        }
+                        
+                        if (newSquare.x > square.x) {
+                            square.east = 0;
+                            newSquare.west = 0;
+                        }
+                        
+                        squareStack.push(square);
+                        mazeGrid[newSquare.x][newSquare.y] = newSquare;
+                        square = newSquare;
+                        //var oldSquare = square;
+                        //square = newSquare;
+                        if (cnt < 50) 
+                            console.log('Adding square ' + square.x + ',' + square.y + ' to maze');
+                        //mazeGrid[square.x][square.y] = square;
+                        //squareStack.push(oldSquare);
+                        mazeCount++;
+                    }
+                    else {
+                        square = squareStack.pop();
+                        square = mazeGrid[square.x][square.y];
+                        if (cnt < 50)
+                            console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
+                    }
+
+                    cnt++;
+                }
+                
+                for(i = 0; i < MAX_X; i++) {
+                    for (j = 0; j < MAX_Y; j++) {
+                        s = mazeGrid[i][j];
+                        if (s == 0) 
+                            s = new Square(i, j);
+                        
+                        console.log('(' + s.x + ',' + s.y + ') ' + s.north + s.south + s.east + s.west);
+                        
+                        maze.add.sprite(i * 30, i * 30, 'all');
+                        
+                        
+                        if (s.north && s.south && 
+                            s.east  && s.west)
+                            maze.add.sprite(i * 30, j * 30, 'full');
+                        
+                        if (s.north) 
+                            maze.add.sprite(i * 30, j * 30, 'north');
+
+                        if (s.south) 
+                            maze.add.sprite(i * 30, j * 30, 'south');
+
+                        if (s.east) 
+                            maze.add.sprite(i * 30, j * 30, 'east');
+
+                        if (s.west) 
+                            maze.add.sprite(i * 30, j * 30, 'west');
+
+                    }
+                }
+            }
+            
+            var maze = new Phaser.Game(800, 600, Phaser.AUTO, 'maze',
+                                          {preload: preload,
+                                            create: create,
+                                            update: update});
+            
+            function preload() {
+                maze.load.image('all', 'assets/all.png');
+                maze.load.image('full', 'assets/full.png');
+                maze.load.image('north', 'assets/north.png');
+                maze.load.image('south', 'assets/south.png');
+                maze.load.image('east', 'assets/east.png');
+                maze.load.image('west', 'assets/west.png');
+            }
+            
+            function create() {
+                maze.stage.backgroundColor = '#ffffff';
+                
+                generateMaze();
+                
+                maze.load.image(5, 5, 'west');
+            }
+            
+            function update() {
+            }
+                        
+            
+        </script>
+    </head>
+    <body>
+        <div id="maze">
+        </div>
+        
+    </body>
+</html>
