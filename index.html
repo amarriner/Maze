@@ -8,11 +8,20 @@
         <script src="js/phaser.min.js"></script>
         
         <script type="text/javascript">
-            var MAX_X = 15;
-            var MAX_Y = 15;
+            var MAX_X = 30;
+            var MAX_Y = 30;
+            
+            var player;
+            var cursors;
             
             var squareStack = [];
             var mazeGrid    = [[]];
+            
+            function Player(x, y, sprite) {
+                this.x      = x;
+                this.y      = y;
+                this.sprite = sprite;
+            }
             
             function Square(x, y) {
                 this.north = 1;
@@ -24,11 +33,11 @@
                 this.y     = y;
             }
             
-            function generateMaze() {
+            function generateMaze(startX, startY) {
                 var i, j;
                 var x, y;
                 var sides = [];
-                var square = new Square(7, 7);
+                var square = new Square(startX, startY);
                 squareStack.push(square);
                 
                 for (i = 0; i < MAX_X; i++) {
@@ -89,8 +98,8 @@
                         square = newSquare;
                         //var oldSquare = square;
                         //square = newSquare;
-                        if (cnt < 50) 
-                            console.log('Adding square ' + square.x + ',' + square.y + ' to maze');
+                        // if (cnt < 50) 
+                        //    console.log('Adding square ' + square.x + ',' + square.y + ' to maze');
                         //mazeGrid[square.x][square.y] = square;
                         //squareStack.push(oldSquare);
                         mazeCount++;
@@ -98,8 +107,8 @@
                     else {
                         square = squareStack.pop();
                         square = mazeGrid[square.x][square.y];
-                        if (cnt < 50)
-                            console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
+                        // if (cnt < 50)
+                        //     console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
                     }
 
                     cnt++;
@@ -111,7 +120,7 @@
                         if (s == 0) 
                             s = new Square(i, j);
                         
-                        console.log('(' + s.x + ',' + s.y + ') ' + s.north + s.south + s.east + s.west);
+                        // console.log('(' + s.x + ',' + s.y + ') ' + s.north + s.south + s.east + s.west);
                         
                         maze.add.sprite(i * 30, i * 30, 'all');
                         
@@ -136,7 +145,7 @@
                 }
             }
             
-            var maze = new Phaser.Game(800, 600, Phaser.AUTO, 'maze',
+            var maze = new Phaser.Game(MAX_X * 30, MAX_Y * 30, Phaser.AUTO, 'maze',
                                           {preload: preload,
                                             create: create,
                                             update: update});
@@ -148,17 +157,54 @@
                 maze.load.image('south', 'assets/south.png');
                 maze.load.image('east', 'assets/east.png');
                 maze.load.image('west', 'assets/west.png');
+                
+                maze.load.image('player', 'assets/player.png');
             }
             
             function create() {
                 maze.stage.backgroundColor = '#ffffff';
                 
-                generateMaze();
+                var startX = Math.floor(Math.random() * (MAX_X - 10)) + 10;
+                var startY = Math.floor(Math.random() * (MAX_Y - 10)) + 10;
+                generateMaze(startX, startY);
+            
+                player = new Player(startX, startY, maze.add.sprite(startX * 30, startY * 30, 'player'));
                 
-                maze.load.image(5, 5, 'west');
+                cursors = maze.input.keyboard.createCursorKeys();
             }
             
             function update() {
+                if (cursors.up.isDown) {
+                    if (! mazeGrid[player.x][player.y].north) {
+                        player.y -= 1;
+                        player.sprite.y -= 30;
+                        console.log('Up');
+                    }
+                }
+
+                if (cursors.down.isDown) {
+                    if (! mazeGrid[player.x][player.y].south) {
+                        player.y += 1;
+                        player.sprite.y += 30;
+                        console.log('Down');
+                    }
+                }
+                
+                if (cursors.left.isDown) {
+                    if (! mazeGrid[player.x][player.y].west) {
+                        player.x -= 1;
+                        player.sprite.x -= 30;
+                        console.log('Left');
+                    }
+                }
+                    
+                if (cursors.right.isDown) {
+                    if (! mazeGrid[player.x][player.y].east) {
+                        player.x += 1;
+                        player.sprite.x += 30;
+                        console.log('Right');
+                    }
+                }
             }
                         
             
