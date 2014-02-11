@@ -13,7 +13,8 @@
             
             var player;
             var cursors;
-            var keyPressed = 0;
+            var keyPressed = false;
+            var up, down, left, right;
             
             var squareStack = [];
             var mazeGrid    = [[]];
@@ -22,6 +23,18 @@
                 this.x      = x;
                 this.y      = y;
                 this.sprite = sprite;
+                
+                this.move = function (x, y, wall) {
+                    if (! wall) {
+                        this.x = x;
+                        this.y = y;
+                    
+                        this.sprite.x = this.x * 30;
+                        this.sprite.y = this.y * 30;
+                    }
+                    
+                    keyPressed = false;
+                }
             }
             
             function Square(x, y) {
@@ -96,16 +109,16 @@
                         
                         squareStack.push(square);
                         mazeGrid[newSquare.x][newSquare.y] = newSquare;
-                        if (cnt < 50) 
-                            console.log('Moving to sqare ' + newSquare.x + ',' + newSquare.y);
+                        // if (cnt < 50) 
+                            // console.log('Moving to sqare ' + newSquare.x + ',' + newSquare.y);
                         square = newSquare;
                         mazeCount++;
                     }
                     else {
                         square = squareStack.pop();
                         square = mazeGrid[square.x][square.y];
-                        if (cnt < 50)
-                            console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
+                        // if (cnt < 50)
+                            // console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
                     }
 
                     cnt++;
@@ -142,7 +155,7 @@
                 }
             }
             
-            var maze = new Phaser.Game(MAX_X * 30, MAX_Y * 30, Phaser.AUTO, 'maze',
+            var maze = new Phaser.Game(5 * 30, 5 * 30, Phaser.AUTO, 'maze',
                                           {preload: preload,
                                             create: create,
                                             update: update});
@@ -160,63 +173,44 @@
             }
             
             function create() {
+                maze.world.setBounds(0, 0, MAX_X * 30, MAX_Y * 30);
                 maze.stage.backgroundColor = '#ffffff';
                 
                 var startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
                 var startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
-                console.log('Starting at square ' + startX + ',' + startY);
+                // console.log('Starting at square ' + startX + ',' + startY);
                 generateMaze(startX, startY);
                 maze.add.sprite(startX * 30, startY * 30, 'end');
             
                 startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
                 startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
-                console.log('Moving player to ' + startX + ',' + startY);
+                // console.log('Moving player to ' + startX + ',' + startY);
                 player = new Player(startX, startY, maze.add.sprite(startX * 30, startY * 30, 'player'));
+                //player.sprite.fixedToCamera = true;
+                //player.sprite.cameraOffset.x = 60;
+                //player.sprite.cameraOffset.y = 60;
                 
-                cursors = maze.input.keyboard.createCursorKeys();
+                maze.camera.follow(player.sprite);
+                
+                up = maze.input.keyboard.addKey(Phaser.Keyboard.UP);
+                up.onUp.add(function() { player.move(player.x, player.y - 1, mazeGrid[player.x][player.y].north); }, this);
+                up.onDown.add(function() { keyPressed = true; }, this);
+                
+                down = maze.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+                down.onUp.add(function() { player.move(player.x, player.y + 1, mazeGrid[player.x][player.y].south); }, this);
+                down.onDown.add(function() { keyPressed = true; }, this);
+
+                left = maze.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+                left.onUp.add(function() { player.move(player.x - 1, player.y, mazeGrid[player.x][player.y].west); }, this);
+                left.onDown.add(function() { keyPressed = true; }, this);
+
+                right = maze.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+                right.onUp.add(function() { player.move(player.x + 1, player.y, mazeGrid[player.x][player.y].east); }, this);
+                right.onDown.add(function() { keyPressed = true; }, this);
+
             }
             
             function update() {
-                
-                if (cursors.up.isDown && cursors.up.timeDown != keyPressed) {
-                    if (! mazeGrid[player.x][player.y].north) {
-                        keyPressed = cursors.up.timeDown;
-                        player.y -= 1;
-                        player.sprite.y -= 30;
-                        console.log(cursors.up.timeDown + ' --- ' + keyPressed);
-                    }
-                }
-
-                if (cursors.down.isDown && cursors.down.timeDown != keyPressed) {
-                    if (! mazeGrid[player.x][player.y].south) {
-                        keyPressed = cursors.down.timeDown;
-                        player.y += 1;
-                        player.sprite.y += 30;
-                        // console.log('Down');
-                    }
-                }
-                
-                if (cursors.left.isDown && cursors.left.timeDown != keyPressed) {
-                    if (! mazeGrid[player.x][player.y].west) {
-                        keyPressed = cursors.left.timeDown;
-                        player.x -= 1;
-                        player.sprite.x -= 30;
-                        // console.log('Left');
-                    }
-                }
-                    
-                if (cursors.right.isDown && cursors.right.timeDown != keyPressed) {
-                    if (! mazeGrid[player.x][player.y].east) {
-                        keyPressed = cursors.right.timeDown;
-                        player.x += 1;
-                        player.sprite.x += 30;
-                        // console.log('Right');
-                    }
-                }
-                
-                if ((cursors.up.isUp || cursors.down.isUp || cursors.left.isUp || cursors.right.ipUp) &&
-                     keyPressed)
-                     keyPressed = false;
             }
                         
             
