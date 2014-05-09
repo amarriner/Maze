@@ -14,13 +14,22 @@
             var SHOW_TILES  = 4;
             
             var player;
+            var wumpus;
+            var end;
+            var title;
+            var pause;
             var cursors;
             var keyPressed = false;
-            var up, down, left, right, B;
+            var playing = false;
+            var up, down, left, right, B, S, P;
             
             var squareStack = [];
             var mazeGrid    = [[]];
             var fogGrid     = [[]];
+            
+            $(document).ready(function() {
+                $('body').focus();
+            });
             
             function Player(x, y, sprite) {
                 this.x              = x;
@@ -65,6 +74,28 @@
                 var x, y;
                 var sides = [];
                 var square = new Square(startX, startY);
+                
+                squareStack = [];
+                
+                if (mazeGrid.length > 0) {
+                    for (i = 0; i < MAX_X; i++) {
+                        if (mazeGrid[i]) {
+                            if (mazeGrid[i].length > 0) {
+                                for (j = 0; j < MAX_Y; j++) {
+                                    if (mazeGrid[i][j])
+                                        mazeGrid[i][j].destroy();
+                                
+                                    if (fogGrid[i][j])
+                                        fogGrid[i][j].destroy();
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                mazeGrid = [[]];
+                fogGrid = [[]];
+                
                 squareStack.push(square);
                 
                 for (i = 0; i < MAX_X; i++) {
@@ -124,16 +155,12 @@
                         
                         squareStack.push(square);
                         mazeGrid[newSquare.x][newSquare.y] = newSquare;
-                        // if (cnt < 50) 
-                            // console.log('Moving to sqare ' + newSquare.x + ',' + newSquare.y);
                         square = newSquare;
                         mazeCount++;
                     }
                     else {
                         square = squareStack.pop();
                         square = mazeGrid[square.x][square.y];
-                        // if (cnt < 50)
-                            // console.log('Popping square ' + square.x + ',' + square.y + ' from stack'); 
                     }
 
                     cnt++;
@@ -144,9 +171,7 @@
                         s = mazeGrid[i][j];
                         if (s == 0) 
                             s = new Square(i, j);
-                        
-                        // console.log('(' + s.x + ',' + s.y + ') ' + s.north + s.south + s.east + s.west);
-                        
+                                            
                         maze.add.sprite(i * TILE_SIZE, i * TILE_SIZE, 'all');
                         
                         if (s.north && s.south && 
@@ -195,64 +220,105 @@
                 
                 maze.load.image('fog', 'assets/64/fog.png');
                 maze.load.image('breadcrumb', 'assets/64/breadcrumb.png');
+                
+                maze.load.image('title', 'assets/64/title.png');
+                maze.load.image('pause', 'assets/64/pause.png');
             }
             
             function create() {
                 maze.world.setBounds(0, 0, MAX_X * TILE_SIZE, MAX_Y * TILE_SIZE);
                 maze.stage.backgroundColor = '#ddddff';
                 
-                var startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
-                var startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
-                // console.log('Starting at square ' + startX + ',' + startY);
-                generateMaze(startX, startY);
-                maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'end');
-            
-                startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
-                startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
-                player = new Player(startX, startY, maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'player'));
-                clearFog();
-                
-                wumpus = new Player(startX - 2, startY - 2, maze.add.sprite((startX - 2) * TILE_SIZE, (startY - 2) * TILE_SIZE, 'wumpus'));
+                initializeMaze();
                 
                 maze.camera.follow(player.sprite);
                 
                 up = maze.input.keyboard.addKey(Phaser.Keyboard.UP);
                 up.onUp.add(function() { 
-                    player.move(player.x, player.y - 1, mazeGrid[player.x][player.y].north); 
-                    clearFog();
-                    wumpus.move();
+                    if (playing) {
+                        player.move(player.x, player.y - 1, mazeGrid[player.x][player.y].north); 
+                        clearFog();
+                    }
                 }, this);
                 up.onDown.add(function() { keyPressed = true; }, this);
                 
                 down = maze.input.keyboard.addKey(Phaser.Keyboard.DOWN);
                 down.onUp.add(function() { 
-                    player.move(player.x, player.y + 1, mazeGrid[player.x][player.y].south); 
-                    clearFog();
+                    if (playing) {
+                        player.move(player.x, player.y + 1, mazeGrid[player.x][player.y].south); 
+                        clearFog();
+                    }
                 }, this);
                 down.onDown.add(function() { keyPressed = true; }, this);
 
                 left = maze.input.keyboard.addKey(Phaser.Keyboard.LEFT);
                 left.onUp.add(function() { 
-                    player.move(player.x - 1, player.y, mazeGrid[player.x][player.y].west);
-                    clearFog();
+                    if (playing) {
+                        player.move(player.x - 1, player.y, mazeGrid[player.x][player.y].west);
+                        clearFog();
+                    }
                 }, this);
                 left.onDown.add(function() { keyPressed = true; }, this);
 
                 right = maze.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
                 right.onUp.add(function() { 
-                    player.move(player.x + 1, player.y, mazeGrid[player.x][player.y].east); 
-                    clearFog();
+                    if (playing) {
+                        player.move(player.x + 1, player.y, mazeGrid[player.x][player.y].east); 
+                        clearFog();
+                    }
                 }, this);
                 right.onDown.add(function() { keyPressed = true; }, this);
                 
                 B = maze.input.keyboard.addKey(Phaser.Keyboard.B);
-                B.onUp.add(function() { player.dropBreadcrumb(); }, this);
+                B.onUp.add(function() { 
+                    if (playing) {
+                        player.dropBreadcrumb(); 
+                    }
+                }, this);
 
+                showTitle();
+                
+                S = maze.input.keyboard.addKey(Phaser.Keyboard.S);
+                S.onUp.add(function() {
+                    if (! playing) {
+                        hideTitle();
+                    }
+                }, this);
+                
+                P = maze.input.keyboard.addKey(Phaser.Keyboard.P);
+                P.onUp.add(function() {
+                    togglePause();
+                }, this);
+                           
             }
             
             function update() {
             }
-                        
+            
+            function initializeMaze() {
+                if (player)
+                    player.destroy();
+                
+                if (wumpus)
+                    wumpus.destroy();
+                
+                if (end)
+                    end.destroy();
+                
+                var startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
+                var startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
+
+                generateMaze(startX, startY);
+                end = maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'end');
+            
+                wumpus = new Player(startX - 2, startY - 2, maze.add.sprite((startX - 2) * TILE_SIZE, (startY - 2) * TILE_SIZE, 'wumpus'));
+                
+                startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
+                startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
+                player = new Player(startX, startY, maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'player'));
+                clearFog();
+            }
+            
             function clearFog() {
                 for (var i = player.x - 1; i <= player.x + 1; i++) {
                     for (var j = player.y - 1; j <= player.y + 1; j++) {
@@ -261,6 +327,31 @@
                             mazeGrid[i][j].fog = 0;
                         }
                     }
+                }
+            }
+            
+            function hideTitle() {
+                title.destroy();
+                playing = true;
+            }
+            
+            function showTitle() {
+                title = maze.add.sprite(0, 0, 'title');
+                title.fixedToCamera = true;
+                title.bringToTop();
+                playing = false;
+            }
+            
+            function togglePause() {
+                if (playing) {
+                    pause = maze.add.sprite(0, 0, 'pause');             
+                    pause.fixedToCamera = true;
+                    pause.bringToTop();
+                    playing = false;
+                }
+                else {
+                    pause.destroy();
+                    playing = true;
                 }
             }
             
