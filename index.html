@@ -8,32 +8,43 @@
         <script src="js/phaser.min.js"></script>
         
         <script type="text/javascript">
-            var MAX_X = 25;
-            var MAX_Y = 15;
+            var MAX_X       = 25;
+            var MAX_Y       = 15;
+            var TILE_SIZE   = 64;
+            var SHOW_TILES  = 4;
             
             var player;
             var cursors;
             var keyPressed = false;
-            var up, down, left, right;
+            var up, down, left, right, B;
             
             var squareStack = [];
             var mazeGrid    = [[]];
+            var fogGrid     = [[]];
             
             function Player(x, y, sprite) {
-                this.x      = x;
-                this.y      = y;
-                this.sprite = sprite;
+                this.x              = x;
+                this.y              = y;
+                this.sprite         = sprite;
+                this.breadcrumbs    = 10;
                 
                 this.move = function (x, y, wall) {
                     if (! wall) {
                         this.x = x;
                         this.y = y;
                     
-                        this.sprite.x = this.x * 30;
-                        this.sprite.y = this.y * 30;
+                        this.sprite.x = this.x * TILE_SIZE;
+                        this.sprite.y = this.y * TILE_SIZE;
                     }
                     
                     keyPressed = false;
+                }
+                
+                this.dropBreadcrumb = function() {
+                    if (this.breadcrumbs > 0) {
+                        maze.add.sprite(this.x * TILE_SIZE, this.y * TILE_SIZE, 'breadcrumb');
+                        this.breadcrumbs--;
+                    }
                 }
             }
             
@@ -45,6 +56,8 @@
                 
                 this.x     = x;
                 this.y     = y;
+                
+                this.fog   = 1;
             }
             
             function generateMaze(startX, startY) {
@@ -56,8 +69,10 @@
                 
                 for (i = 0; i < MAX_X; i++) {
                     mazeGrid[i] = [];
+                    fogGrid[i]  = [];
                     for(j = 0; j < MAX_Y; j++) {
                         mazeGrid[i][j] = 0;
+                        fogGrid[i][j]  = 0;
                     }
                 }
                 
@@ -132,87 +147,122 @@
                         
                         // console.log('(' + s.x + ',' + s.y + ') ' + s.north + s.south + s.east + s.west);
                         
-                        maze.add.sprite(i * 30, i * 30, 'all');
-                        
+                        maze.add.sprite(i * TILE_SIZE, i * TILE_SIZE, 'all');
                         
                         if (s.north && s.south && 
                             s.east  && s.west)
-                            maze.add.sprite(i * 30, j * 30, 'full');
+                            maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'full');
                         
                         if (s.north) 
-                            maze.add.sprite(i * 30, j * 30, 'north');
+                            maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'north');
 
                         if (s.south) 
-                            maze.add.sprite(i * 30, j * 30, 'south');
+                            maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'south');
 
                         if (s.east) 
-                            maze.add.sprite(i * 30, j * 30, 'east');
+                            maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'east');
 
                         if (s.west) 
-                            maze.add.sprite(i * 30, j * 30, 'west');
-
+                            maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'west');
+                        
+                        fogGrid[i][j] = maze.add.sprite(i * TILE_SIZE, j * TILE_SIZE, 'fog');
+                    }
+                }
+                
+                for(i = 0; i < MAX_X; i++) {
+                    for (j = 0; j < MAX_Y; j++) {
+                        fogGrid[i][j].bringToTop();
                     }
                 }
             }
             
-            var maze = new Phaser.Game(5 * 30, 5 * 30, Phaser.AUTO, 'maze',
+            var maze = new Phaser.Game(SHOW_TILES * TILE_SIZE, SHOW_TILES * TILE_SIZE, Phaser.AUTO, 'maze',
                                           {preload: preload,
                                             create: create,
                                             update: update});
             
             function preload() {
-                maze.load.image('all', 'assets/all.png');
-                maze.load.image('full', 'assets/full.png');
-                maze.load.image('north', 'assets/north.png');
-                maze.load.image('south', 'assets/south.png');
-                maze.load.image('east', 'assets/east.png');
-                maze.load.image('west', 'assets/west.png');
+                maze.load.image('all', 'assets/64/all.png');
+                maze.load.image('full', 'assets/64/full.png');
+                maze.load.image('north', 'assets/64/north.png');
+                maze.load.image('south', 'assets/64/south.png');
+                maze.load.image('east', 'assets/64/east.png');
+                maze.load.image('west', 'assets/64/west.png');
                 
-                maze.load.image('player', 'assets/player.png');
-                maze.load.image('end', 'assets/end.png');
+                maze.load.image('player', 'assets/64/player.png');
+                maze.load.image('wumpus', 'assets/64/wumpus.png');
+                maze.load.image('end', 'assets/64/end.png');
+                
+                maze.load.image('fog', 'assets/64/fog.png');
+                maze.load.image('breadcrumb', 'assets/64/breadcrumb.png');
             }
             
             function create() {
-                maze.world.setBounds(0, 0, MAX_X * 30, MAX_Y * 30);
-                maze.stage.backgroundColor = '#ffffff';
+                maze.world.setBounds(0, 0, MAX_X * TILE_SIZE, MAX_Y * TILE_SIZE);
+                maze.stage.backgroundColor = '#ddddff';
                 
                 var startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
                 var startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
                 // console.log('Starting at square ' + startX + ',' + startY);
                 generateMaze(startX, startY);
-                maze.add.sprite(startX * 30, startY * 30, 'end');
+                maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'end');
             
                 startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
                 startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
-                // console.log('Moving player to ' + startX + ',' + startY);
-                player = new Player(startX, startY, maze.add.sprite(startX * 30, startY * 30, 'player'));
-                //player.sprite.fixedToCamera = true;
-                //player.sprite.cameraOffset.x = 60;
-                //player.sprite.cameraOffset.y = 60;
+                player = new Player(startX, startY, maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'player'));
+                clearFog();
+                
+                wumpus = new Player(startX - 2, startY - 2, maze.add.sprite((startX - 2) * TILE_SIZE, (startY - 2) * TILE_SIZE, 'wumpus'));
                 
                 maze.camera.follow(player.sprite);
                 
                 up = maze.input.keyboard.addKey(Phaser.Keyboard.UP);
-                up.onUp.add(function() { player.move(player.x, player.y - 1, mazeGrid[player.x][player.y].north); }, this);
+                up.onUp.add(function() { 
+                    player.move(player.x, player.y - 1, mazeGrid[player.x][player.y].north); 
+                    clearFog();
+                    wumpus.move();
+                }, this);
                 up.onDown.add(function() { keyPressed = true; }, this);
                 
                 down = maze.input.keyboard.addKey(Phaser.Keyboard.DOWN);
-                down.onUp.add(function() { player.move(player.x, player.y + 1, mazeGrid[player.x][player.y].south); }, this);
+                down.onUp.add(function() { 
+                    player.move(player.x, player.y + 1, mazeGrid[player.x][player.y].south); 
+                    clearFog();
+                }, this);
                 down.onDown.add(function() { keyPressed = true; }, this);
 
                 left = maze.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-                left.onUp.add(function() { player.move(player.x - 1, player.y, mazeGrid[player.x][player.y].west); }, this);
+                left.onUp.add(function() { 
+                    player.move(player.x - 1, player.y, mazeGrid[player.x][player.y].west);
+                    clearFog();
+                }, this);
                 left.onDown.add(function() { keyPressed = true; }, this);
 
                 right = maze.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-                right.onUp.add(function() { player.move(player.x + 1, player.y, mazeGrid[player.x][player.y].east); }, this);
+                right.onUp.add(function() { 
+                    player.move(player.x + 1, player.y, mazeGrid[player.x][player.y].east); 
+                    clearFog();
+                }, this);
                 right.onDown.add(function() { keyPressed = true; }, this);
+                
+                B = maze.input.keyboard.addKey(Phaser.Keyboard.B);
+                B.onUp.add(function() { player.dropBreadcrumb(); }, this);
 
             }
             
             function update() {
             }
                         
+            function clearFog() {
+                for (var i = player.x - 1; i <= player.x + 1; i++) {
+                    for (var j = player.y - 1; j <= player.y + 1; j++) {
+                        if (i >= 0 && j >= 0 && i < MAX_X && j < MAX_Y && mazeGrid[i][j].fog == 1) {
+                            fogGrid[i][j].destroy();
+                            mazeGrid[i][j].fog = 0;
+                        }
+                    }
+                }
+            }
             
         </script>
     </head>
