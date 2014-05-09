@@ -21,7 +21,7 @@
             var cursors;
             var keyPressed = false;
             var playing = false;
-            var up, down, left, right, B, S, P;
+            var up, down, left, right, B, S;
             
             var squareStack = [];
             var mazeGrid    = [[]];
@@ -222,7 +222,6 @@
                 maze.load.image('breadcrumb', 'assets/64/breadcrumb.png');
                 
                 maze.load.image('title', 'assets/64/title.png');
-                maze.load.image('pause', 'assets/64/pause.png');
             }
             
             function create() {
@@ -284,12 +283,6 @@
                         hideTitle();
                     }
                 }, this);
-                
-                P = maze.input.keyboard.addKey(Phaser.Keyboard.P);
-                P.onUp.add(function() {
-                    togglePause();
-                }, this);
-                           
             }
             
             function update() {
@@ -311,8 +304,6 @@
                 generateMaze(startX, startY);
                 end = maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'end');
             
-                wumpus = new Player(startX - 2, startY - 2, maze.add.sprite((startX - 2) * TILE_SIZE, (startY - 2) * TILE_SIZE, 'wumpus'));
-                
                 startX = Math.floor(Math.random() * (MAX_X - 12)) + 12;
                 startY = Math.floor(Math.random() * (MAX_Y -  7)) +  7;
                 player = new Player(startX, startY, maze.add.sprite(startX * TILE_SIZE, startY * TILE_SIZE, 'player'));
@@ -340,19 +331,6 @@
                 title.fixedToCamera = true;
                 title.bringToTop();
                 playing = false;
-            }
-            
-            function togglePause() {
-                if (playing) {
-                    pause = maze.add.sprite(0, 0, 'pause');             
-                    pause.fixedToCamera = true;
-                    pause.bringToTop();
-                    playing = false;
-                }
-                else {
-                    pause.destroy();
-                    playing = true;
-                }
             }
             
         </script>
