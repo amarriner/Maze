@@ -1,0 +1,86 @@
+style {
+    display: none;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    background-color: #eee;
+    font-family: Arial, Verdana, Helvetica;
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+h1, h2, div {
+    padding: 0;
+    margin: 0;
+}
+
+#goal {
+    background-color: #ddf;
+    border-bottom: 1px solid #999;
+    color: #55f;
+    font-weight: bold;
+    font-size: 125%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#header {
+    background-color: #ddf;
+    color: #55f;
+    padding: 2px;
+}
+
+#instructions {
+    background-color: #dedede;
+    border: 1px solid #999;
+    color: #777;
+    margin-top: 25px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 30%;
+}
+
+#instructions div {
+    padding: 5px;
+    vertical-align: middle;
+}
+
+#instructions img {
+    background-color: #ddf;
+    border: 1px solid #55f;
+}
+
+#main {
+    clear: both;
+}
+
+#maze {
+    margin-top: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 152px;
+}
+
+#subheader {
+    background-color: #bbb;
+    color: #fff;
+    overflow: hidden;
+    padding: 2px;
+}
+
+#subheader div {
+    float: left;
+    width: 50%;
+}
+
+#subheader div a, #subheader div a:hover, #subheader div a:visited, #subheader div a:active {
+    color: #ddf;
+    font-weight: bold;
+}
+
+.right {
+    text-align: right;
+}
