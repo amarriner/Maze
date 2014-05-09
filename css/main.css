@@ -81,6 +81,10 @@ h1, h2, div {
     font-weight: bold;
 }
 
+#version {
+    font-size: 40%;
+}
+
 .right {
     text-align: right;
 }
